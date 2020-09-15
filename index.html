@@ -1,0 +1,114 @@
+<html>
+<head>
+    <!-- Apua karttaan osoitteesta http://harrywood.co.uk/maps/examples/openlayers/remove-marker.view.html -->
+    <title>Map</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.11/lib/OpenLayers.js"></script>
+    <style type="text/css">
+        html, body, #mapdiv {
+            width:85%; height:85%; margin:0;
+        }
+    </style>
+</head>
+
+<body>
+<div id="mapdiv"></div>
+<div class="dropdown">
+    <select id="description" >
+    </select>
+    <button id="button" type="button" >Find the station</button>
+</div>
+<div>
+    <p id="name"></p>
+    <p id="free"></p>
+    <p id="empty"></p>
+    <p id="longitude"></p>
+    <p id="latitude"></p>
+</div>
+<div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+<script>
+
+    //--- http request!
+    var xmlhttp = new XMLHttpRequest();
+    var url = "http://api.citybik.es/v2/networks/citybikes-helsinki?fields=stations"; // 2
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var myArr = JSON.parse(xmlhttp.responseText);
+            aFunction(myArr.network.stations); // 3
+        }
+    }
+    xmlhttp.open("GET", url, true); // 4
+    xmlhttp.send();
+    //---
+
+    var longit = 24.9425268;
+    var latit = 60.1708236;
+
+    function aFunction(arr) { // 5
+        var out = "";
+        var i;
+        var all = "";
+        let arrSorted = arr.sort((a, b) => {
+            return a.name.localeCompare(b.name);
+        });
+
+        for (i = 0; i < arrSorted.length; i++) {
+            out += "<option value='" + i + "'>" + arrSorted[i].name + "</option>";
+        }
+
+        document.getElementById("description").innerHTML = out; // 6
+
+        let button = document.getElementById("button");
+
+        button.onclick = function(){
+            let choice = parseInt(document.getElementById("description").value, 10);
+            console.log(choice);
+            console.log(arrSorted[choice].name);
+            document.getElementById("name").innerHTML = arrSorted[choice].name;
+            document.getElementById("free").innerHTML = "Free bikes: " + arrSorted[choice].free_bikes;
+            document.getElementById("empty").innerHTML = "Empty slots: " + arrSorted[choice].empty_slots;
+
+            goToPlace(arrSorted[choice].longitude, arrSorted[choice].latitude);
+
+            createAMarker(arrSorted[choice].longitude, arrSorted[choice].latitude);
+        }
+    }
+
+    //harrywood.co.uk/maps/examples/openlayers/marker-array.view.html
+    var map = new OpenLayers.Map("mapdiv");
+    map.addLayer(new OpenLayers.Layer.OSM());
+    epsg4326 =  new OpenLayers.Projection("EPSG:4326"); //WGS 1984 projection
+    projectTo = map.getProjectionObject(); //The map projection (Spherical Mercator)
+    var vectorLayer = null;
+    console.log("vectorLayer on " + vectorLayer);
+
+    function goToPlace(longit, latit){
+        var lonLat = new OpenLayers.LonLat( longit, latit ).transform(epsg4326, projectTo);
+        var zoom = 16;
+        map.setCenter(lonLat, zoom);
+    }
+
+    function createAMarker(longitude, latitude){
+        if (vectorLayer){
+            //vectorLayer.removeFeatures( [ feature ] ); //ei tunnu toimivan :(
+            vectorLayer.removeAllFeatures();
+        }
+        vectorLayer = new OpenLayers.Layer.Vector("Overlay");
+        let feature = new OpenLayers.Feature.Vector(
+            new OpenLayers.Geometry.Point( longitude, latitude ).transform(epsg4326, projectTo),
+            {description:'This is the value of<br>the description attribute'},
+            //kuvan lähde <div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+            {externalGraphic: './map-marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
+            );
+        vectorLayer.addFeatures(feature);
+        map.addLayer(vectorLayer);
+    }
+
+    goToPlace(longit, latit);
+
+    //sää
+    //api.openweathermap.org/data/2.5/weather?lat=60.1708236&lon=24.9425268&appid=114332134ea7ed53cb7a0e88a863eb5d
+    //https://openweathermap.org/current
+
+</script>
+
+</body></html>

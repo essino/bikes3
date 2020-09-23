@@ -7,6 +7,10 @@
         html, body, #mapdiv {
             width:85%; height:85%; margin:0;
         }
+        body {
+            background-color: powderblue;
+        }
+
     </style>
 </head>
 
@@ -23,31 +27,50 @@
     <p id="empty"></p>
     <p id="longitude"></p>
     <p id="latitude"></p>
+    <p id="temp"></p>
+    <p><img id="weathericon" src="" alt=""/></p>
+
+
 </div>
 <div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 <script>
 
-    //--- http request!
-    var xmlhttp = new XMLHttpRequest();
-    var url = "http://api.citybik.es/v2/networks/citybikes-helsinki?fields=stations"; // 2
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            var myArr = JSON.parse(xmlhttp.responseText);
-            aFunction(myArr.network.stations); // 3
-        }
-    }
-    xmlhttp.open("GET", url, true); // 4
-    xmlhttp.send();
-    //---
+    function doRequest(url, vl) {
+        //--- http request!
+        var xmlhttp = new XMLHttpRequest();
 
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                let myArr = JSON.parse(xmlhttp.responseText);
+                console.log("Responsetext " + xmlhttp.responseText);
+                if (vl) {
+                    //console.log("This is the lenght of the array " +myArr.length);
+                    console.log("Longitude coordinate " + myArr.coord.lon);
+                    handleWeather(myArr);
+                    console.log("Tööttötöö");
+                } else {
+                    aFunction(myArr); // 3
+                }
+
+            }
+        }
+        xmlhttp.open("GET", url, true); // 4
+        xmlhttp.send();
+        //---
+    }
+    var url = "http://api.citybik.es/v2/networks/citybikes-helsinki?fields=stations"; // 2
+
+    var vectorLayer = null;
+    doRequest(url, vectorLayer);
     var longit = 24.9425268;
     var latit = 60.1708236;
 
     function aFunction(arr) { // 5
+        var arr2 = arr.network.stations;
         var out = "";
         var i;
         var all = "";
-        let arrSorted = arr.sort((a, b) => {
+        let arrSorted = arr2.sort((a, b) => {
             return a.name.localeCompare(b.name);
         });
 
@@ -70,6 +93,9 @@
             goToPlace(arrSorted[choice].longitude, arrSorted[choice].latitude);
 
             createAMarker(arrSorted[choice].longitude, arrSorted[choice].latitude);
+            console.log("marker created");
+            //tämä uutta
+            showWeather(arrSorted[choice].longitude, arrSorted[choice].latitude)
         }
     }
 
@@ -78,7 +104,7 @@
     map.addLayer(new OpenLayers.Layer.OSM());
     epsg4326 =  new OpenLayers.Projection("EPSG:4326"); //WGS 1984 projection
     projectTo = map.getProjectionObject(); //The map projection (Spherical Mercator)
-    var vectorLayer = null;
+
     console.log("vectorLayer on " + vectorLayer);
 
     function goToPlace(longit, latit){
@@ -103,11 +129,38 @@
         map.addLayer(vectorLayer);
     }
 
+
     goToPlace(longit, latit);
 
+
+    function showWeather(longitude, latitude) {
+        console.log("weather function works 1");
+
+        var url2 = "http://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&appid=114332134ea7ed53cb7a0e88a863eb5d"; // 2
+        doRequest(url2, vectorLayer);
+
+    }
+
+    function handleWeather(arr) {
+        console.log("This is the temperature in F " + arr.main.temp);
+        let tempInK = parseFloat(arr.main.temp);
+        let tempInC = tempInK - 273.15;
+        let tempShow = tempInC.toFixed(1);
+        console.log("This is the temperature in C " + tempShow);
+        let weathericon = arr.weather[0].icon;
+        console.log("Description " + weathericon);
+        document.getElementById("temp").innerHTML = "Temperature now: " + tempShow + " degrees Celsius";
+
+        let image = "http://openweathermap.org/img/wn/" + weathericon + "@2x.png"
+        document.getElementById("weathericon").src = image;
+        document.getElementById("weathericon").alt = "weather icon";
+
+
+    }
     //sää
     //api.openweathermap.org/data/2.5/weather?lat=60.1708236&lon=24.9425268&appid=
     //https://openweathermap.org/current
+    //to do -divit säälle -tietojen näyttäminen diveissä -ikoni
 
 </script>
 

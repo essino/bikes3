@@ -10,7 +10,6 @@
         body {
             background-color: powderblue;
         }
-
     </style>
 </head>
 
@@ -23,31 +22,29 @@
 </div>
 <div>
     <p id="name"></p>
-    <p id="free"></p>
-    <p id="empty"></p>
     <p id="longitude"></p>
     <p id="latitude"></p>
     <p id="temp"></p>
     <p><img id="weathericon" src="" alt=""/></p>
-
+    <div id="destination" class="dropdown"></div>
 
 </div>
-<div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+<div>Marker icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 <script>
 
     function doRequest(url, vl) {
         //--- http request!
-        var xmlhttp = new XMLHttpRequest();
+        let xmlhttp = new XMLHttpRequest();
 
         xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                 let myArr = JSON.parse(xmlhttp.responseText);
-                console.log("Responsetext " + xmlhttp.responseText);
+                //console.log("Responsetext " + xmlhttp.responseText);
                 if (vl) {
                     //console.log("This is the lenght of the array " +myArr.length);
-                    console.log("Longitude coordinate " + myArr.coord.lon);
+                    //console.log("Longitude coordinate " + myArr.coord.lon);
                     handleWeather(myArr);
-                    console.log("Tööttötöö");
+                    //console.log("Tööttötöö");
                 } else {
                     aFunction(myArr); // 3
                 }
@@ -58,18 +55,18 @@
         xmlhttp.send();
         //---
     }
-    var url = "http://api.citybik.es/v2/networks/citybikes-helsinki?fields=stations"; // 2
+    let url = "http://api.citybik.es/v2/networks/citybikes-helsinki?fields=stations"; // 2
 
-    var vectorLayer = null;
+    let vectorLayer = null;
     doRequest(url, vectorLayer);
-    var longit = 24.9425268;
-    var latit = 60.1708236;
+    let longit = 24.9425268;
+    let latit = 60.1708236;
 
     function aFunction(arr) { // 5
-        var arr2 = arr.network.stations;
-        var out = "";
-        var i;
-        var all = "";
+        let arr2 = arr.network.stations;
+        let out = "";
+        let i;
+        let all = "";
         let arrSorted = arr2.sort((a, b) => {
             return a.name.localeCompare(b.name);
         });
@@ -84,32 +81,39 @@
 
         button.onclick = function(){
             let choice = parseInt(document.getElementById("description").value, 10);
-            console.log(choice);
-            console.log(arrSorted[choice].name);
-            document.getElementById("name").innerHTML = arrSorted[choice].name;
-            document.getElementById("free").innerHTML = "Free bikes: " + arrSorted[choice].free_bikes;
-            document.getElementById("empty").innerHTML = "Empty slots: " + arrSorted[choice].empty_slots;
+            //console.log(choice);
+            //console.log(arrSorted[choice].name);
+            document.getElementById("name").innerHTML = arrSorted[choice].name + "; Free bikes: " + arrSorted[choice].free_bikes + "; Empty slots: " + arrSorted[choice].empty_slots;
+            //document.getElementById("free").innerHTML = "Free bikes: " + arrSorted[choice].free_bikes;
+            //document.getElementById("empty").innerHTML = "Empty slots: " + arrSorted[choice].empty_slots;
 
             goToPlace(arrSorted[choice].longitude, arrSorted[choice].latitude);
 
             createAMarker(arrSorted[choice].longitude, arrSorted[choice].latitude);
-            console.log("marker created");
+            //console.log("marker created");
             //tämä uutta
-            showWeather(arrSorted[choice].longitude, arrSorted[choice].latitude)
+            showWeather(arrSorted[choice].longitude, arrSorted[choice].latitude);
+            //console.log(arrSorted[choice].longitude + " and " + arrSorted[choice].latitude);
+            makeDropdownmenu(arrSorted, arrSorted[choice].longitude, arrSorted[choice].latitude);
+
+
         }
     }
 
     //harrywood.co.uk/maps/examples/openlayers/marker-array.view.html
-    var map = new OpenLayers.Map("mapdiv");
+    let map = new OpenLayers.Map("mapdiv");
     map.addLayer(new OpenLayers.Layer.OSM());
     epsg4326 =  new OpenLayers.Projection("EPSG:4326"); //WGS 1984 projection
     projectTo = map.getProjectionObject(); //The map projection (Spherical Mercator)
+    //map kuntoon reittiä varten
 
-    console.log("vectorLayer on " + vectorLayer);
+
+
+   // console.log("vectorLayer on " + vectorLayer);
 
     function goToPlace(longit, latit){
-        var lonLat = new OpenLayers.LonLat( longit, latit ).transform(epsg4326, projectTo);
-        var zoom = 16;
+        let lonLat = new OpenLayers.LonLat( longit, latit ).transform(epsg4326, projectTo);
+        let zoom = 16;
         map.setCenter(lonLat, zoom);
     }
 
@@ -134,21 +138,22 @@
 
 
     function showWeather(longitude, latitude) {
-        console.log("weather function works 1");
+        //console.log("weather function works 1");
 
-        var url2 = "http://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&appid="; // 2
+        //Appid!!!
+        let url2 = "http://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&appid="; // 2
         doRequest(url2, vectorLayer);
 
     }
 
     function handleWeather(arr) {
-        console.log("This is the temperature in F " + arr.main.temp);
+        //console.log("This is the temperature in F " + arr.main.temp);
         let tempInK = parseFloat(arr.main.temp);
         let tempInC = tempInK - 273.15;
         let tempShow = tempInC.toFixed(1);
-        console.log("This is the temperature in C " + tempShow);
+        //console.log("This is the temperature in C " + tempShow);
         let weathericon = arr.weather[0].icon;
-        console.log("Description " + weathericon);
+        //console.log("Description " + weathericon);
         document.getElementById("temp").innerHTML = "Temperature now: " + tempShow + " degrees Celsius";
 
         let image = "http://openweathermap.org/img/wn/" + weathericon + "@2x.png"
@@ -157,10 +162,104 @@
 
 
     }
+
+    //to do route: -html divit: -kohteen valinta alasvetovalikosta
+    //- kutsut tietokantaan
+    //- tietokannasta oikeat koordinaatit takaisin
+    //viivan piirtäminen karttaan
+    function makeDropdownmenu(array, longit1, latit1) {
+        let wholeElement = document.getElementById("destination");
+        let selectThing = document.createElement("select");
+        wholeElement.appendChild(selectThing);
+        selectThing.setAttribute("id", "allOptions")
+        let menuoptions;
+        for (i = 0; i < array.length; i++) {
+            menuoptions += "<option value='" + i + "'>" + array[i].name + "</option>";
+        }
+        document.getElementById("allOptions").innerHTML = menuoptions;
+        //nappi
+        let destinationButton = document.createElement("button");
+        let text = document.createTextNode("Find route to destination");
+        destinationButton.appendChild(text);
+        wholeElement.appendChild(destinationButton);
+        destinationButton.setAttribute("id", "destinationButton");
+        destinationButton.setAttribute("type", "button");
+        destinationButton.onclick = function () {
+
+            let choice2 = parseInt(document.getElementById("allOptions").value, 10);
+            //console.log(choice2);
+            //--- another http request to the the routing service
+            let startLat = latit1.toFixed(7);
+            let startLong = longit1.toFixed(7);
+            let endLat = array[choice2].latitude.toFixed(7);
+            let endLong = array[choice2].longitude.toFixed(7);
+            let xmlhttp3 = new XMLHttpRequest();
+            //EI TOIMI, ehkä väärin päin long ja lat tai liian monta desimaalia!!!!!!!!!! Edit. toimii :)
+            //console.log("long: " + longit1 + ", and lat: " + latit1);
+            //console.log("long2: " + array[choice2].longitude + ", and lat2: " + array[choice2].latitude);
+            //appid!!!
+            let url3 = "https://api.openrouteservice.org/v2/directions/cycling-regular?api_key=&start="+ startLong +","+startLat+ "&end="+ endLong+","+ endLat +"";
+
+
+            xmlhttp3.onreadystatechange = function () {
+                //console.log("sisällä onreadystatechangessa")
+                if (xmlhttp3.readyState == 4 && xmlhttp3.status == 200) {
+                    var myArr3 = JSON.parse(xmlhttp3.responseText);
+                    //makeRoute(myArr3.type.features.geometry.coordinates); // 3
+                    //TO DO: tällä saadaan ensimmäinen reittipiste: miten saadaan kaikki reittipisteen, for-luuppi ja taulukko?
+                    //huomaa myös hakee tällä hetkellä kovakoodatut alku- ja loppupisteet
+                    let coordTable = [];
+
+                    //console.log(myArr3.features[0].geometry.coordinates.length);
+                    for (let indeksi = 0; indeksi < myArr3.features[0].geometry.coordinates.length; indeksi++) {
+                        //console.log("Tässä on " + indeksi + ": " + myArr3.features[0].geometry.coordinates[indeksi]);
+                        coordTable.push(myArr3.features[0].geometry.coordinates[indeksi]);
+                    }
+                    //console.log("coordTable" + coordTable);
+                    makeRoute(coordTable);
+                }
+            }
+            xmlhttp3.open("GET", url3, true); // 4
+            xmlhttp3.send();
+            //---
+        }
+
+        function makeRoute(routeCoords) {
+            console.log("sisällä makeRoutessa");
+            console.log(routeCoords);
+            //mahtaako uusi layer toimia näin? kuinka monta layeria voi olla? kannattaisiko laittaa vanhaan layeriin?
+            let lineLayer = new OpenLayers.Layer.Vector("Overlay");
+            let thePoints = [];
+            for (const coord of routeCoords){
+                console.log(coord);
+                let aPoint = new OpenLayers.Geometry.Point(coord[0],coord[1]).transform(epsg4326, projectTo);
+                thePoints.push(aPoint);
+            }
+
+            let lineFeature = new OpenLayers.Feature.Vector(
+                new OpenLayers.Geometry.LineString(thePoints)
+            );
+
+            var myFirstLineStyle = OpenLayers.Util.applyDefaults(myFirstLineStyle, OpenLayers.Feature.Vector.style['default']);
+            myFirstLineStyle.strokeColor = "#261BC3";
+            myFirstLineStyle.strokeWidth = 8;
+            lineFeature.style = myFirstLineStyle;
+
+            lineLayer.addFeatures(lineFeature);
+
+            map.addLayer(lineLayer);
+        }
+    }
+
+
+
+
+
+
     //sää
     //api.openweathermap.org/data/2.5/weather?lat=60.1708236&lon=24.9425268&appid=
     //https://openweathermap.org/current
-    //to do -divit säälle -tietojen näyttäminen diveissä -ikoni
+
 
 </script>
 
